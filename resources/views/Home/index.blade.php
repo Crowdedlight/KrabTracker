@@ -2,11 +2,6 @@
 
 @section('content')
 
-        <?php
-        $freeSigs = Auth::user()->freeSigs();
-        $ownSigs = Auth::user()->ownSigs();
-        ?>
-
 <!-- SIDEBAR -->
 <div class="pull-right">
     <div class="jumbotron sidebar-jumbotron">
@@ -20,9 +15,9 @@
     </div>
 </div>
 
-    @include('Home.partials.FreeSigTable', $freeSigs)
+    @include('Home.partials.FreeSigTable')
 
-    @include('Home.partials.OwnSigTable', $ownSigs)
+    @include('Home.partials.OwnSigTable')
 
 @endsection
 
@@ -47,44 +42,123 @@
 
     Channel.bind( 'App\\Events\\SignaturesUpdated', function( data ) {
 
-        console.log(data.update);
         if(data.update)
         {
             updateAllSigs();
             getLatestTimeUpdate();
         }
     } );
+
+    Channel.bind( 'App\\Events\\SignatureIsGettingRunned', function( data ) {
+
+        var sig = data['sig'];
+
+        var id = "#" + sig.id;
+
+        var tables = $('.dataTable').DataTable();
+
+        var freeTable = tables.table('#freeSigsTable');
+        var ownTable = tables.table('#ownSigsTable');
+
+        freeTable.row(id).remove().draw();
+
+        var newRow = {
+            "DT_RowId": sig.id,
+            "0": sig.sig_id,
+            "1": sig.type,
+            "2": sig.status,
+            "3": (sig.circular) ? "Yes" : "No",
+            "4": (sig.carrier) ? "Yes" : "No",
+            "5": '<button type="button" class="btn btn-warning finishSiteBtn">Finished</button>'
+        };
+
+        var newRowNode = ownTable.row.add(newRow).draw().node();
+
+
+        //highlight it was added TODO not getting back to black. Why?
+        $( newRowNode )
+                .css( 'color', 'red' )
+                .animate( { color: 'black' }, 1500);
+
+    });
+
+    Channel.bind( 'App\\Events\\SignatureIsFinished', function( data ) {
+
+        var sig = data['sig'];
+
+        var id = "#" + sig.id;
+
+        var tables = $('.dataTable').DataTable();
+        var ownTable = tables.table('#ownSigsTable');
+
+        ownTable.row(id).remove().draw();
+
+        var newRow = {
+            "DT_RowId": sig.id,
+            "DT_RowClass": "bg-warning",
+            "0": sig.sig_id,
+            "1": sig.type,
+            "2": sig.status,
+            "3": (sig.circular) ? "Yes" : "No",
+            "4": (sig.carrier) ? "Yes" : "No",
+            "5": ''
+        };
+
+        var newRowNode = ownTable.row.add(newRow).draw().node();
+
+    });
 </script>
 
 <script language="JavaScript">
     $(document).ready(function () {
-        $('#freeSigsTable').DataTable( {
-            pageLength: 10,
-            "lengthMenu": [ 10, 15, 20, 25 ]
-        });
 
-        $('#ownSigsTable').DataTable( {
-            pageLength: 10,
-            "lengthMenu": [ 10, 15, 20, 25 ]
-        });
+        //make dataTables
+        makeDataTables();
 
         //click binder for run btns
-        $('.runSiteBtn').on('click', function() {
+        $(document).on('click', '.runSiteBtn', function() {
             //get element id from hidden field
-            $id = $(this).closest('tr').attr('id');
-            runSite($id)
+            var id = $(this).closest('tr').attr('id');
+            runSite(id)
+        });
+
+        //click binder for finish btns
+        $(document).on('click', '.finishSiteBtn', function() {
+            //get element id from hidden field
+            var id = $(this).closest('tr').attr('id');
+            finishSite(id)
         });
 
 
         //Last updated time
         getLatestTimeUpdate();
         //update time every 2 min
-        window.setInterval(getLatestTimeUpdate(), 120000);
+        window.setInterval(getLatestTimeUpdate, 120000);
     });
+
+    function makeDataTables() {
+        $('#freeSigsTable').DataTable( {
+            pageLength: 10,
+            "lengthMenu": [ 10, 15, 20, 25 ]
+        });
+
+        //TODO make sort by status as default
+        $('#ownSigsTable').DataTable( {
+            pageLength: 10,
+            "lengthMenu": [ 10, 15, 20, 25 ]
+        });
+    }
 
     function runSite(id)
     {
         //ajax call with db id of sig that is getting runned
+        $.post('{{ route('sig.runSite') }}', {sig_id: id});
+    }
+
+    function finishSite(id)
+    {
+        //ajax call with db id of sig that is getting runned
+        $.post('{{ route('sig.finishSite') }}', {sig_id: id});
     }
 
     function getLatestTimeUpdate()
@@ -98,7 +172,20 @@
     function updateAllSigs()
     {
         $.get('{{route('sig.getUpdatedTables')}}', function(data){
-            console.log(data);
+
+            $('#freeSigROW').fadeOut("slow", function() {
+                $(this).replaceWith(data.htmlFree);
+                $('#freeSigROW').fadeIn("slow");
+            });
+
+            $('#ownSigROW').fadeOut("slow", function() {
+                $(this).replaceWith(data.htmlOwn);
+                $('#ownSigROW').fadeIn("slow");
+
+                //make them to datatables
+                makeDataTables();
+            });
+
         });
     }
 </script>

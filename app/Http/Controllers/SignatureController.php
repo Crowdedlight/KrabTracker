@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\SignatureIsFinished;
+use App\Events\SignatureIsGettingRunned;
 use App\Events\SignaturesUpdated;
 use Event;
 use Auth;
@@ -12,13 +14,15 @@ use App\Models\Option;
 use Carbon\Carbon;
 
 use App\Http\Requests;
+use Illuminate\Support\Facades\View;
 
 class SignatureController extends Controller
 {
     public function updateSigs(Request $request)
     {
-
-        //TODO Add validation. Empty is not allowed
+        $this->validate($request, [
+            'signatures' => 'required'
+        ]);
 
         //Signatures
         $lines = explode(PHP_EOL, $request->input('signatures'));
@@ -96,12 +100,61 @@ class SignatureController extends Controller
 
     public function getUpdatedTables()
     {
-        $sigs = Auth::user()->freeSigs();
-        $ownSigs = Auth::user()->ownSigs(); //TODO make in new view
-
-        $htmlFree = View::make('home.partials.FreeSigTable', $sigs)->render();
-        $htmlOwn = View::make('home.partials.OwnSigTable', $ownSigs)->render();
+        $htmlFree = View::make('home.partials.FreeSigTable')->render();
+        $htmlOwn = View::make('home.partials.OwnSigTable')->render();
 
         return response()->json(['htmlFree' => $htmlFree, 'htmlOwn' => $htmlOwn]);
+    }
+
+    public function runSite(Request $request)
+    {
+        //Find selected site and mark it as getting run by current pilot
+        $this->validate($request, [
+            'sig_id' => 'required|numeric'
+        ]);
+
+        try {
+
+        $sig = Signature::where('id', $request->input('sig_id'))->get()->first();
+
+        $sig->FK_pilot = Auth::user()->id;
+        $sig->startTime = Carbon::now();
+        $sig->status = "running";
+        $sig->save();
+
+        }
+        catch (\Exception $ex)
+        {
+            //do nothing
+        }
+
+        //Fire event to move sig
+        Event::fire(new SignatureIsGettingRunned($sig));
+    }
+
+    public function finishSite(Request $request)
+    {
+        //Find selected site and mark it as getting run by current pilot
+        $this->validate($request, [
+            'sig_id' => 'required|numeric'
+        ]);
+
+        try {
+
+            $sig = Signature::where('id', $request->input('sig_id'))->get()->first();
+
+            $sig->FK_pilot = Auth::user()->id;
+            $sig->finishTime = Carbon::now();
+            $sig->status = "finished";
+            $sig->save();
+
+        }
+        catch (\Exception $ex)
+        {
+            //do nothing
+        }
+
+        //Fire event to move sig
+        Event::fire(new SignatureIsFinished($sig));
     }
 }

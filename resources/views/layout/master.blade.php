@@ -29,6 +29,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
+<script src="{{ URL::asset('js/script.js') }}"></script>
 
 @stack('javascript')
 

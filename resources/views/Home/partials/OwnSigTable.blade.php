@@ -1,4 +1,8 @@
-<div class="row">
+<?php
+$ownSigs = Auth::user()->ownSigs();
+?>
+
+<div class="row" id="ownSigROW">
     <div class="col-md-9">
         <div class="jumbotron">
             <h2>Your Signatures</h2>
@@ -11,7 +15,7 @@
                         <th>Status</th>
                         <th>Circular</th>
                         <th>Carrier</th>
-                        <th></th>
+                        <th>&nbsp;</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -24,32 +28,31 @@
                             {{ $className = "bg-danger" }}
                         @endif
 
-                        <tr class="{{ $className  }}">
-                            <th>
-                                <input type="text" hidden class="hidden" value="{{$sig->id}}" >
+                        <tr class="{{ $className  }}" id="{{$sig->id}}" >
+                            <td>
                                 {{$sig->sig_id }}
-                            </th>
-                            <th>{{$sig->type }}</th>
-                            <th>{{$sig->status }}</th>
-                            <th>
+                            </td>
+                            <td>{{$sig->type }}</td>
+                            <td>{{$sig->status }}</td>
+                            <td>
                                 @if ($sig->circular)
                                     Yes
                                 @else
                                     No
                                 @endif
-                            </th>
-                            <th>
+                            </td>
+                            <td>
                                 @if ($sig->carrier)
                                     Yes
                                 @else
                                     No
                                 @endif
-                            </th>
-                            <th>
+                            </td>
+                            <td>
                                 @if ($sig->status === 'running')
-                                    <button type="button" class="btn btn-warning">Finished</button>
+                                    <button type="button" class="btn btn-warning finishSiteBtn">Finished</button>
                                 @endif
-                            </th>
+                            </td>
                         </tr>
                     @endforeach
                     </tbody>

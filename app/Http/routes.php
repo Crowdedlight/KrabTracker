@@ -23,4 +23,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/signatures/getLastUpdateTime', ['uses' => 'SignatureController@getLastUpdateTime', 'as' => 'sig.lastUpdate']);
     Route::get('/signatures/getUpdatedTables', ['uses' => 'SignatureController@getUpdatedTables', 'as' => 'sig.getUpdatedTables']);
 
+    Route::post('/signatures/runSite', ['uses' => 'SignatureController@runSite', 'as' => 'sig.runSite']);
+    Route::post('/signatures/finishSite', ['uses' => 'SignatureController@finishSite', 'as' => 'sig.finishSite']);
+
 });

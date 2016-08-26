@@ -1,4 +1,9 @@
-<div class="row">
+
+<?php
+    $freeSigs = Auth::user()->freeSigs();
+?>
+
+<div class="row" id="freeSigROW">
     <div class="col-md-9">
         <div class="jumbotron">
             <h2>Current Free Signatures</h2>
@@ -11,7 +16,7 @@
                         <th>Status</th>
                         <th>Circular</th>
                         <th>Carrier</th>
-                        <th></th>
+                        <th>&nbsp;</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -25,31 +30,30 @@
                         @endif
 
                         <tr class="{{ $className  }}" id="{{$sig->id}}">
-                            <th>
-                                {{--<input type="text" hidden class="hidden" value="{{$sig->id}}" >--}}
+                            <td>
                                 {{$sig->sig_id }}
-                            </th>
-                            <th>{{$sig->type }}</th>
-                            <th>{{$sig->status }}</th>
-                            <th>
+                            </td>
+                            <td>{{$sig->type }}</td>
+                            <td>{{$sig->status }}</td>
+                            <td>
                                 @if ($sig->circular)
                                     Yes
                                 @else
                                     No
                                 @endif
-                            </th>
-                            <th>
+                            </td>
+                            <td>
                                 @if ($sig->carrier)
                                     Yes
                                 @else
                                     No
                                 @endif
-                            </th>
-                            <th>
+                            </td>
+                            <td>
                                 @if ($sig->status === 'free')
                                     <button type="button" class="btn btn-success runSiteBtn">Run Site</button>
                                 @endif
-                            </th>
+                            </td>
                         </tr>
                     @endforeach
                     </tbody>
